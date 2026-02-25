@@ -1,13 +1,11 @@
-# gemini-cli-rs (Phase A scaffold)
+# gemini-cli-rs
 
-Rust rewrite scaffold for a `gemini` CLI.
+A musl-friendly Rust `gemini` CLI with:
 
-This repo intentionally **does not** ship real API keys or a working Gemini network implementation yet. Phase A focuses on:
-
-- A Clap-based `gemini` binary
-- CLI placeholders: `-m/--model` and `--include-directories`
-- Config + state directory resolution with `GEMINI_HOME` override
-- A stub provider module with a streaming output scaffold
+- Google Gemini (Generative Language API) streaming (SSE) via `reqwest` + `rustls`
+- Google OAuth **device-code** login (optional) with token persisted under `GEMINI_HOME`/XDG state
+- Optional TUI chat (`ratatui`) with streaming
+- Optional MCP stdio client + tool discovery and server config
 
 ## Build
 
@@ -16,28 +14,115 @@ cargo build
 cargo run -- --help
 ```
 
-Musl-friendly dependency choices:
-- `reqwest` with `rustls-tls` (no OpenSSL)
-- `tokio` async runtime
-
-## Usage
+Feature flags:
 
 ```bash
-# Basic (stub) streaming output
-cargo run -- "Hello from Phase A"
+# TUI
+cargo build --features tui
 
-# Choose model (placeholder)
-cargo run -- -m gemini-2.0-flash "Say hello"
+# MCP
+cargo build --features mcp
 
-# Include directories (placeholder; currently only resolved/printed)
-cargo run -- --include-directories ./src -- "Summarize this project"
+# TUI + MCP
+cargo build --features "tui mcp"
+```
+
+## Quick start (API key)
+
+1) Create an API key in Google AI Studio.
+2) Run with `GEMINI_API_KEY`:
+
+```bash
+export GEMINI_API_KEY="..."
+
+# basic prompt
+cargo run -- "Hello"
+
+# pick a model
+cargo run -- -m gemini-1.5-flash "Write a haiku about Rust"
+```
+
+## OAuth device-code login (optional)
+
+This is useful when you want to use OAuth instead of an API key.
+
+### 1) Provide OAuth client id (and optional secret)
+
+Set env vars:
+
+```bash
+export GEMINI_OAUTH_CLIENT_ID="..."
+# optional
+export GEMINI_OAUTH_CLIENT_SECRET="..."
+```
+
+Or put them in `{config_dir}/config.toml`:
+
+```toml
+provider = "google"
+model = "gemini-1.5-flash"
+
+[google]
+# api_key = "..." # optional alternative
+
+[google.oauth]
+client_id = "..."
+# client_secret = "..." # optional
+# scopes = ["https://www.googleapis.com/auth/generative-language"]
+```
+
+### 2) Login
+
+```bash
+cargo run -- login
+```
+
+The device-code token is saved under the state directory (see **Directories** below) as:
+
+- `google_oauth_token.json`
+
+After login, running `gemini ...` will use the saved token if no API key is present.
+
+## TUI chat (streaming)
+
+Requires the `tui` feature:
+
+```bash
+cargo run --features tui -- tui
+```
+
+TUI commands:
+
+- `/quit` (or `Esc`) to exit
+- `/clear` to clear chat
+- `/model <name>` to change model
+
+## MCP stdio servers (config + tool discovery)
+
+Requires the `mcp` feature.
+
+Servers are stored under state as `mcp_servers.json`.
+
+```bash
+# add a server (enabled by default)
+cargo run --features mcp -- mcp add myserver node path/to/server.js
+
+# list configured servers
+cargo run --features mcp -- mcp list
+
+# disable / enable
+cargo run --features mcp -- mcp disable myserver
+cargo run --features mcp -- mcp enable myserver
+
+# list tools from all enabled servers
+cargo run --features mcp -- mcp tools
 ```
 
 ## Directories
 
-The CLI resolves config + state directories as follows:
+The CLI resolves config + state directories as follows.
 
-### GEMINI_HOME override
+### `GEMINI_HOME` override
 If `GEMINI_HOME` is set:
 - config dir: `$GEMINI_HOME/config`
 - state dir:  `$GEMINI_HOME/state`
@@ -49,41 +134,7 @@ If `GEMINI_HOME` is not set:
 
 Both directories are created on startup.
 
-## Configuration (placeholder)
+## Notes
 
-A config file location is reserved at:
-
-- `{config_dir}/config.toml`
-
-Phase A loads it if present but does not require it.
-
-Example `config.toml` (future-facing):
-
-```toml
-# provider = "google"
-# model = "gemini-2.0-flash"
-# api_key_env = "GEMINI_API_KEY"
-```
-
-## Provider scaffold
-
-`provider::stub::StubProvider` demonstrates a streaming interface that yields text chunks over time.
-
-This is where a real Gemini provider will be implemented later using `reqwest` streaming (SSE/HTTP chunked) and proper auth.
-
-## Next steps (Phase B+ ideas)
-
-- Implement real Gemini provider:
-  - Read API key from env (e.g., `GEMINI_API_KEY`) or OS keychain
-  - Perform streaming request with `reqwest` and parse chunks
-- Add subcommands:
-  - `gemini chat`, `gemini prompt`, `gemini models`, `gemini auth`
-- Implement `--include-directories` behavior:
-  - Walk directories, apply ignore rules (.gitignore), size caps
-  - Provide file snippets or structured context to the model
-- Persist state:
-  - history, cache, last-used model
-- Add tests:
-  - path resolution matrix (GEMINI_HOME vs XDG)
-  - CLI parsing snapshots
-
+- HTTP is `reqwest` with `rustls-tls` (no OpenSSL).
+- Streaming uses SSE (`alt=sse`) for `models/{model}:streamGenerateContent`.

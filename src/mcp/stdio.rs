@@ -11,7 +11,7 @@ pub async fn list_tools(server: &McpServerConfig) -> anyhow::Result<Vec<McpTool>
 
     // MCP initialize
     let init = rpc
-        .request::<serde_json::Value, InitializeResult>(
+        .request::<InitializeParams, InitializeResult>(
             "initialize",
             InitializeParams {
                 protocol_version: "2024-11-05".to_string(),

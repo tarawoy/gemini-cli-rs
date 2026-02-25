@@ -42,3 +42,12 @@ pub fn state_dir() -> anyhow::Result<PathBuf> {
 
     ensure_dir(&home_dir()?.join(".local").join("state").join("gemini"))
 }
+
+pub fn google_token_path() -> anyhow::Result<PathBuf> {
+    Ok(state_dir()?.join("google_oauth_token.json"))
+}
+
+#[cfg(feature = "mcp")]
+pub fn mcp_servers_path() -> anyhow::Result<PathBuf> {
+    Ok(state_dir()?.join("mcp_servers.json"))
+}

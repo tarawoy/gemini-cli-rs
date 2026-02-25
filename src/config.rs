@@ -7,8 +7,34 @@ pub struct Config {
     /// Default model (optional)
     pub model: Option<String>,
 
-    /// Provider identifier (e.g., "google"); reserved for later.
+    /// Provider identifier (e.g., "google").
     pub provider: Option<String>,
+
+    /// Google provider settings.
+    #[serde(default)]
+    pub google: GoogleConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct GoogleConfig {
+    /// API key (recommended for quick start). Can also be provided via GEMINI_API_KEY.
+    pub api_key: Option<String>,
+
+    /// OAuth device-flow settings (for `gemini login`).
+    #[serde(default)]
+    pub oauth: GoogleOAuthConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct GoogleOAuthConfig {
+    /// OAuth client id. Can also be provided via GEMINI_OAUTH_CLIENT_ID.
+    pub client_id: Option<String>,
+
+    /// Optional OAuth client secret. Can also be provided via GEMINI_OAUTH_CLIENT_SECRET.
+    pub client_secret: Option<String>,
+
+    /// OAuth scopes. If unset, a reasonable default is used.
+    pub scopes: Option<Vec<String>>,
 }
 
 impl Config {

@@ -219,7 +219,7 @@ fn draw(
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(3)])
-            .split(f.size());
+            .split(f.area());
 
         let mut text = Text::default();
         for l in lines {

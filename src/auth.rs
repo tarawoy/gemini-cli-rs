@@ -101,7 +101,7 @@ pub async fn device_login(
         oauth.scopes.join(" ")
     };
 
-    let mut form: Vec<(&str, String)> = vec![("client_id", oauth.client_id.clone()), ("scope", scope)];
+    let form: Vec<(&str, String)> = vec![("client_id", oauth.client_id.clone()), ("scope", scope)];
 
     let resp = http
         .post(oauth.device_code_url.clone())
@@ -144,7 +144,7 @@ pub async fn device_login(
 
         tokio::time::sleep(poll_interval).await;
 
-        let mut form: Vec<(&str, String)> = vec![
+        let form: Vec<(&str, String)> = vec![
             ("client_id", oauth.client_id.clone()),
             ("device_code", dc.device_code.clone()),
             (
@@ -223,7 +223,7 @@ pub async fn refresh_if_needed(
         return Err(anyhow!("access token expired and no refresh_token is available; run `gemini login`"));
     };
 
-    let mut form: Vec<(&str, String)> = vec![
+    let form: Vec<(&str, String)> = vec![
         ("client_id", oauth.client_id.clone()),
         ("refresh_token", refresh_token),
         ("grant_type", "refresh_token".to_string()),

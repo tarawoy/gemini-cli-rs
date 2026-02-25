@@ -1,7 +1,6 @@
 use super::{ChatChunk, ChatRequest, Provider};
 use anyhow::{anyhow, Context};
 use futures_core::stream::BoxStream;
-use futures_core::Stream;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};

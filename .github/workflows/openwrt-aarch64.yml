@@ -1,0 +1,54 @@
+name: openwrt-aarch64-musl
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "src/**"
+      - ".github/workflows/openwrt-aarch64.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-musl
+
+      # cross uses Docker on the GitHub runner. This is the most reliable way
+      # to produce musl aarch64 binaries without fighting system toolchains.
+      - name: Install cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+
+      - name: Build (no extra features)
+        run: |
+          cross build --release --target aarch64-unknown-linux-musl
+
+      - name: Build (tui+mcp)
+        env:
+          CARGO_TARGET_DIR: target-tui-mcp
+        run: |
+          cross build --release --target aarch64-unknown-linux-musl --features "tui,mcp"
+
+      - name: Package artifacts
+        run: |
+          set -eux
+          mkdir -p dist
+          cp target/aarch64-unknown-linux-musl/release/gemini dist/gemini-aarch64-musl
+          cp target-tui-mcp/aarch64-unknown-linux-musl/release/gemini dist/gemini-aarch64-musl-tui-mcp
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-cli-rs-aarch64-musl
+          path: dist/

@@ -12,7 +12,7 @@ mod tui;
 
 use anyhow::Context;
 use clap::Parser;
-use provider::{ChatRequest, Provider};
+use provider::ChatRequest;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
